@@ -62,8 +62,30 @@ export const TOOL_SCHEMA = {
         .optional()
         .describe(TOOL_PARAM_DESCRIPTIONS.is_final_draft),
 };
+
+// Add this right after TOOL_NAME
+export const TOOL_REQUIRED_PARAMS_NOTICE = `
+⚠️ REQUIRED PARAMETERS - ALL MUST BE PROVIDED:
+1. reasoning_chain: string[] - At least one reasoning step
+2. next_step_needed: boolean - Whether another iteration is needed
+3. draft_number: number - Current draft number (≥ 1)
+4. total_drafts: number - Total planned drafts (≥ draft_number)
+
+Optional parameters only required based on context:
+- is_critique?: boolean - If true, critique_focus is required
+- critique_focus?: string - Required when is_critique=true
+- revision_instructions?: string - Recommended for revision steps
+- step_to_review?: number - Specific step index to review
+- is_final_draft?: boolean - Marks final iteration
+`;
+
 export const TOOL_DESCRIPTION = `
-    # Chain of Draft (CoD): Systematic Reasoning Through Iterative Refinement
+    # Chain of Draft (CoD): Systematic Reasoning Tool
+
+    ${TOOL_REQUIRED_PARAMS_NOTICE}
+
+    ## Purpose:
+    Enhances problem-solving through structured, iterative critique and revision.
 
     Chain of Draft is an advanced reasoning tool that enhances problem-solving through structured, iterative critique and revision. Unlike traditional reasoning approaches, CoD mimics the human drafting process to improve clarity, accuracy, and robustness of conclusions.
 
