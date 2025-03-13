@@ -1,0 +1,36 @@
+{
+  "name": "mcp-chain-of-draft-server",
+  "version": "0.1.0",
+  "description": "A Model Context Protocol server which provides Chain of Draft style thinking",
+  "main": "build/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node build/index.js",
+    "build": "tsc",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "test": "jest"
+  },
+  "keywords": [
+    "mcp",
+    "model",
+    "context",
+    "protocol",
+    "cod",
+    "chain-of-draft"
+  ],
+  "author": "bsmi021",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.7.0",
+    "dotenv": "^16.4.7",
+    "zod": "^3.24.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.3"
+  }
+}
