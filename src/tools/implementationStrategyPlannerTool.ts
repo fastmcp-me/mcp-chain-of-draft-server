@@ -4,13 +4,13 @@ import { z } from "zod";
 import { TOOL_NAME, TOOL_SCHEMA, TOOL_DESCRIPTION } from "./implementationStrategyPlannerParams.js";
 import { logger } from "../utils/logging.js";
 
-interface Risk {
+export interface Risk {
     description: string;
     mitigation: string;
     impact: "low" | "medium" | "high";
 }
 
-interface Phase {
+export interface Phase {
     name: string;
     description: string;
     tasks: string[];
@@ -19,7 +19,7 @@ interface Phase {
     dependencies: string[];
 }
 
-interface ImplementationApproach {
+export interface ImplementationApproach {
     name: string;
     description: string;
     phases: Phase[];
@@ -27,20 +27,20 @@ interface ImplementationApproach {
     cons: string[];
 }
 
-interface Dependency {
+export interface Dependency {
     name: string;
     description: string;
     type: "feature" | "component" | "system" | "external" | "other";
     status: "not_started" | "in_progress" | "completed" | "blocked";
 }
 
-interface Constraint {
+export interface Constraint {
     category: "time" | "resource" | "technical" | "organizational" | "other";
     description: string;
     impact: "low" | "medium" | "high";
 }
 
-interface ImplementationStrategyData {
+export interface ImplementationStrategyData {
     // Required fields
     strategy_id: string;
     feature_name: string;

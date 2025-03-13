@@ -3,8 +3,10 @@ import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { TOOL_NAME, TOOL_SCHEMA, TOOL_DESCRIPTION } from "./apiBluprintDesignerParams.js";
 import { logger } from "../utils/logging.js";
+import { SessionManagerFactory } from "../utils/sessionManagerFactory.js";
+import { APIBlueprintSession } from "../utils/toolSessions.js";
 
-interface Parameter {
+export interface Parameter {
     name: string;
     location: "path" | "query" | "header" | "cookie";
     required: boolean;
@@ -12,13 +14,13 @@ interface Parameter {
     description: string;
 }
 
-interface RequestBody {
+export interface RequestBody {
     content_type: string;
     schema: Record<string, any>;
     example: string;
 }
 
-interface Response {
+export interface Response {
     status_code: number;
     description: string;
     content_type: string;
@@ -26,7 +28,7 @@ interface Response {
     example: string;
 }
 
-interface Endpoint {
+export interface Endpoint {
     path: string;
     method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
     description: string;
@@ -35,12 +37,12 @@ interface Endpoint {
     responses: Response[];
 }
 
-interface AuthRequirement {
+export interface AuthRequirement {
     type: "none" | "basic" | "bearer" | "api_key" | "oauth2" | "custom";
     description: string;
 }
 
-interface APIBlueprintData {
+export interface APIBlueprintData {
     // Required fields
     api_id: string;
     api_name: string;
@@ -75,22 +77,28 @@ export const apiBlueprintDesignerTool = (server: McpServer): void => {
                 validatedInput.total_drafts = validatedInput.draft_number;
             }
 
-            // Initialize history for this API if needed
-            const apiId = validatedInput.api_id;
-            if (!apiHistory[apiId]) {
-                apiHistory[apiId] = [];
+            // Get session manager and retrieve/create session
+            const sessionManager = SessionManagerFactory.getInstance().getAPIBlueprintManager();
+            const session = await sessionManager.getSession(validatedInput.api_id);
+
+            // Initialize session data if needed
+            if (!session.data.apiHistory) {
+                session.data.apiHistory = [];
+            }
+            if (!session.data.activeCritiques) {
+                session.data.activeCritiques = [];
             }
 
             // Store the API blueprint in history
-            apiHistory[apiId].push(validatedInput);
+            session.data.apiHistory.push(validatedInput);
 
             // Handle critique tracking
             if (validatedInput.is_critique && validatedInput.critique_focus) {
-                if (!activeCritiques[apiId]) {
-                    activeCritiques[apiId] = [];
-                }
-                activeCritiques[apiId].push(validatedInput.critique_focus);
+                session.data.activeCritiques.push(validatedInput.critique_focus);
             }
+
+            // Update session
+            await sessionManager.updateSession(validatedInput.api_id, session.data);
 
             // Format response
             return {
@@ -107,9 +115,10 @@ export const apiBlueprintDesignerTool = (server: McpServer): void => {
                         critiqueFocus: validatedInput.critique_focus,
                         revisionInstructions: validatedInput.revision_instructions,
                         endpointCount: validatedInput.endpoints.length,
-                        activeCritiques: activeCritiques[apiId] || [],
-                        apiHistoryLength: apiHistory[apiId].length,
-                        isFinalDraft: validatedInput.is_final_draft
+                        activeCritiques: session.data.activeCritiques,
+                        apiHistoryLength: session.data.apiHistory.length,
+                        isFinalDraft: validatedInput.is_final_draft,
+                        sessionMetadata: session.metadata
                     }, null, 2)
                 }]
             };

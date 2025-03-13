@@ -3,14 +3,16 @@ import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { TOOL_NAME, TOOL_SCHEMA, TOOL_DESCRIPTION } from "./architectureDecisionRecorderParams.js";
 import { logger } from "../utils/logging.js";
+import { SessionManagerFactory } from "../utils/sessionManagerFactory.js";
+import { ADRSession } from "../utils/toolSessions.js";
 
-interface Alternative {
+export interface Alternative {
     option: string;
     pros: string[];
     cons: string[];
 }
 
-interface ADRData {
+export interface ADRData {
     // Required fields
     id: string;
     title: string;
@@ -30,8 +32,6 @@ interface ADRData {
     is_final_draft: boolean;  // This has a default of false
 }
 
-const adrHistory: Record<string, ADRData[]> = {};
-
 export const architectureDecisionRecorderTool = (server: McpServer): void => {
     const processADRRequest = async (input: unknown) => {
         try {
@@ -45,11 +45,20 @@ export const architectureDecisionRecorderTool = (server: McpServer): void => {
                 validatedInput.total_drafts = validatedInput.draft_number;
             }
 
-            // Store the ADR in history
-            if (!adrHistory[validatedInput.id]) {
-                adrHistory[validatedInput.id] = [];
+            // Get session manager and retrieve/create session
+            const sessionManager = SessionManagerFactory.getInstance().getADRManager();
+            const session = await sessionManager.getSession(validatedInput.id);
+
+            // Initialize session data if needed
+            if (!session.data.adrHistory) {
+                session.data.adrHistory = [];
             }
-            adrHistory[validatedInput.id].push(validatedInput);
+
+            // Store the ADR in history
+            session.data.adrHistory.push(validatedInput);
+
+            // Update session
+            await sessionManager.updateSession(validatedInput.id, session.data);
 
             // Format response
             return {
@@ -65,7 +74,8 @@ export const architectureDecisionRecorderTool = (server: McpServer): void => {
                         critiqueFocus: validatedInput.critique_focus,
                         revisionInstructions: validatedInput.revision_instructions,
                         isFinalDraft: validatedInput.is_final_draft,
-                        historyLength: adrHistory[validatedInput.id].length
+                        historyLength: session.data.adrHistory.length,
+                        sessionMetadata: session.metadata
                     }, null, 2)
                 }]
             };

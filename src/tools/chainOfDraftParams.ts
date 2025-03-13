@@ -61,6 +61,10 @@ export const TOOL_SCHEMA = {
     is_final_draft: z.boolean()
         .optional()
         .describe(TOOL_PARAM_DESCRIPTIONS.is_final_draft),
+
+    new_reasoning_steps: z.array(z.string().min(1, "Reasoning steps cannot be empty"))
+        .min(1, "At least one new reasoning step is required")
+        .describe("New reasoning steps to add to the chain"),
 };
 
 // Add this right after TOOL_NAME

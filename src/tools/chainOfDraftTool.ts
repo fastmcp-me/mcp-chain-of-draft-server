@@ -19,12 +19,27 @@ interface ThoughtData {
     is_final_draft: boolean;  // This has a default of false
 }
 
-const thoughtHistory: ThoughtData[] = [];
-const branches: Record<string, ThoughtData[]> = {};
+interface SessionState {
+    thoughtHistory: ThoughtData[];
+    branches: Record<string, ThoughtData[]>;
+}
+
+const sessions = new Map<string, SessionState>();
 
 export const chainOfDraftTool = (server: McpServer): void => {
-    const processThoughtRequest = async (input: unknown) => {
+    const getOrCreateSession = (sessionId: string): SessionState => {
+        if (!sessions.has(sessionId)) {
+            sessions.set(sessionId, {
+                thoughtHistory: [],
+                branches: {}
+            });
+        }
+        return sessions.get(sessionId)!;
+    };
+
+    const processThoughtRequest = async (input: unknown, sessionId: string) => {
         try {
+            const session = getOrCreateSession(sessionId);
             const validatedInput = validateThoughtData(input);
             if (!validatedInput) {
                 throw new McpError(ErrorCode.InvalidParams, "Invalid thought data");
@@ -35,16 +50,16 @@ export const chainOfDraftTool = (server: McpServer): void => {
                 validatedInput.total_drafts = validatedInput.draft_number;
             }
 
-            // Store the thought in history
-            thoughtHistory.push(validatedInput);
+            // Store the thought in session history
+            session.thoughtHistory.push(validatedInput);
 
             // Handle branching if specified
             if (validatedInput.step_to_review !== undefined) {
                 const branchId = `branch_${validatedInput.draft_number}_${validatedInput.step_to_review}`;
-                if (!branches[branchId]) {
-                    branches[branchId] = [];
+                if (!session.branches[branchId]) {
+                    session.branches[branchId] = [];
                 }
-                branches[branchId].push(validatedInput);
+                session.branches[branchId].push(validatedInput);
             }
 
             // Format response
@@ -60,8 +75,8 @@ export const chainOfDraftTool = (server: McpServer): void => {
                         revisionInstructions: validatedInput.revision_instructions,
                         stepToReview: validatedInput.step_to_review,
                         isFinalDraft: validatedInput.is_final_draft,
-                        branches: Object.keys(branches),
-                        thoughtHistoryLength: thoughtHistory.length
+                        branches: Object.keys(session.branches),
+                        thoughtHistoryLength: session.thoughtHistory.length
                     }, null, 2)
                 }]
             };
@@ -80,12 +95,15 @@ export const chainOfDraftTool = (server: McpServer): void => {
         TOOL_NAME,
         TOOL_DESCRIPTION,
         TOOL_SCHEMA,
-        async (args, extra) => ({
-            content: [{
-                type: "text" as const,
-                text: JSON.stringify(await processThoughtRequest(args))
-            }]
-        })
+        async (args, extra) => {
+            const sessionId = extra.sessionId || 'default';
+            return {
+                content: [{
+                    type: "text" as const,
+                    text: JSON.stringify(await processThoughtRequest(args, sessionId))
+                }]
+            };
+        }
     );
 }
 
@@ -265,3 +283,12 @@ const processThought = (input: unknown): { content: Array<{ type: string; text: 
         };
     }
 }
+
+const clearSession = (sessionId: string): void => {
+    sessions.delete(sessionId);
+};
+
+const pruneOldSessions = (): void => {
+    // Add logic to remove sessions older than X time
+    // This prevents memory leaks
+};

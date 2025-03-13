@@ -3,18 +3,20 @@ import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { TOOL_NAME, TOOL_SCHEMA, TOOL_DESCRIPTION } from "./codeReviewLensParams.js";
 import { logger } from "../utils/logging.js";
+import { SessionManagerFactory } from "../utils/sessionManagerFactory.js";
+import { CodeReviewSession } from "../utils/toolSessions.js";
 
-type ReviewDimension = "performance" | "security" | "maintainability" | "readability" | "testability" | "correctness" | "documentation";
-type FindingSeverity = "info" | "suggestion" | "warning" | "critical";
+export type ReviewDimension = "performance" | "security" | "maintainability" | "readability" | "testability" | "correctness" | "documentation";
+export type FindingSeverity = "info" | "suggestion" | "warning" | "critical";
 
-interface CodeFile {
+export interface CodeFile {
     path: string;
     content: string;
     language: string;
     line_count: number;
 }
 
-interface ReviewFinding {
+export interface ReviewFinding {
     file: string;
     line_range: [number, number];
     dimension: ReviewDimension;
@@ -24,7 +26,7 @@ interface ReviewFinding {
     justification?: string;
 }
 
-interface CodeReviewData {
+export interface CodeReviewData {
     // Required fields
     review_id: string;
     pull_request_id: string;
@@ -59,22 +61,28 @@ export const codeReviewLensTool = (server: McpServer): void => {
                 validatedInput.total_drafts = validatedInput.draft_number;
             }
 
-            // Initialize history for this review if needed
-            const reviewId = validatedInput.review_id;
-            if (!reviewHistory[reviewId]) {
-                reviewHistory[reviewId] = [];
+            // Get session manager and retrieve/create session
+            const sessionManager = SessionManagerFactory.getInstance().getCodeReviewManager();
+            const session = await sessionManager.getSession(validatedInput.review_id);
+
+            // Initialize session data if needed
+            if (!session.data.reviewHistory) {
+                session.data.reviewHistory = [];
+            }
+            if (!session.data.activeCritiques) {
+                session.data.activeCritiques = [];
             }
 
             // Store the code review in history
-            reviewHistory[reviewId].push(validatedInput);
+            session.data.reviewHistory.push(validatedInput);
 
             // Handle critique tracking
             if (validatedInput.is_critique && validatedInput.critique_focus) {
-                if (!activeCritiques[reviewId]) {
-                    activeCritiques[reviewId] = [];
-                }
-                activeCritiques[reviewId].push(validatedInput.critique_focus);
+                session.data.activeCritiques.push(validatedInput.critique_focus);
             }
+
+            // Update session
+            await sessionManager.updateSession(validatedInput.review_id, session.data);
 
             // Format response
             return {
@@ -93,9 +101,10 @@ export const codeReviewLensTool = (server: McpServer): void => {
                         isCritique: validatedInput.is_critique,
                         critiqueFocus: validatedInput.critique_focus,
                         revisionInstructions: validatedInput.revision_instructions,
-                        activeCritiques: activeCritiques[reviewId] || [],
-                        reviewHistoryLength: reviewHistory[reviewId].length,
-                        isFinalDraft: validatedInput.is_final_draft
+                        activeCritiques: session.data.activeCritiques,
+                        reviewHistoryLength: session.data.reviewHistory.length,
+                        isFinalDraft: validatedInput.is_final_draft,
+                        sessionMetadata: session.metadata
                     }, null, 2)
                 }]
             };
