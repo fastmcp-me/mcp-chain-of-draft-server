@@ -1,7 +1,5 @@
 # MCP Chain of Draft Server 🧠
 
-[Banner Image Placeholder - We can add a cool banner showing iterative refinement process]
-
 Chain of Draft Server is a powerful AI-driven tool that helps developers make better decisions through systematic, iterative refinement of thoughts and designs. It integrates seamlessly with popular AI agents and provides a structured approach to reasoning, API design, architecture decisions, code reviews, and implementation planning.
 
 ## 🌟 Features
@@ -15,42 +13,6 @@ Chain of Draft Server is a powerful AI-driven tool that helps developers make be
 * **Error Handling**: Comprehensive error types and handling
 * **Real-time Logging**: Built-in debugging and monitoring system
 
-### Specialized Tools
-
-* **API Blueprint Designer** 🔨  
-  * Design APIs through iterative refinement  
-  * Document endpoints systematically  
-  * Validate API structures in real-time
-* **Architecture Decision Recorder** 📝  
-  * Document decisions systematically  
-  * Track alternatives and consequences  
-  * Maintain decision history
-* **Code Review Lens** 🔍  
-  * Multi-dimensional code analysis  
-  * Focused critique capabilities  
-  * Structured review process
-* **Implementation Strategy Planner** 📊  
-  * Break down complex features  
-  * Plan implementation approaches  
-  * Track dependencies and constraints
-
-## 🎯 How It Works
-
-1. **Choose Your Tool**
-   * Select the appropriate specialized tool for your task
-   * Each tool follows the Chain of Draft protocol
-   * Start with an initial draft of your thoughts
-
-2. **Iterative Refinement**
-   * Tools guide you through systematic critique
-   * Receive focused improvement suggestions
-   * Refine your work through multiple drafts
-
-3. **Final Output**
-   * Get polished, well-documented results
-   * Track the evolution of your thinking
-   * Maintain history for future reference
-
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -63,7 +25,7 @@ Chain of Draft Server is a powerful AI-driven tool that helps developers make be
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/mcp-chain-of-draft-server.git
+git clone https://github.com/bsmi021/mcp-chain-of-draft-server.git
 cd mcp-chain-of-draft-server
 ```
 
@@ -99,31 +61,6 @@ const thoughtData = {
 };
 ```
 
-### API Blueprint Designer
-
-```typescript
-const apiDesign = {
-    api_id: "user-service",
-    name: "Create User",
-    path: "/users",
-    method: "POST",
-    description: "Create a new user account",
-    // ... other parameters
-};
-```
-
-### Architecture Decision Recorder
-
-```typescript
-const adr = {
-    id: "auth-001",
-    title: "Authentication Strategy",
-    status: "proposed",
-    context: "Need to implement user authentication",
-    // ... other parameters
-};
-```
-
 ## 🛠️ Development
 
 ### Project Structure
@@ -132,10 +69,7 @@ const adr = {
 src/
 ├── tools/                          # Specialized Tools
 │   ├── chainOfDraft/              # Core Protocol
-│   ├── apiBluprintDesigner/       # API Design Tool
-│   ├── architectureDecisionRecorder/ # ADR Tool
-│   ├── codeReviewLens/            # Code Review Tool
-│   └── implementationStrategyPlanner/ # Planning Tool
+│   └── index.ts / # Entry Point
 ├── utils/                         # Utilities
 └── index.ts                      # Entry Point
 ```

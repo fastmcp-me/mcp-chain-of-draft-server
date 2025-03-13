@@ -300,3 +300,5 @@ cython_debug/
 #.idea/
 
 .cursor/
+ui-design-plan.md
+
